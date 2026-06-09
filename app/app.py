@@ -1,0 +1,22 @@
+import os
+from flask import Flask
+from config import Config
+from controllers.accueil import bp_accueil
+
+
+app = Flask(__name__) # Crée l'application Web (Flask)
+app.config.from_object(Config) # charge toutes les variables de configuration définies dans la classe Config
+
+
+# Préfixe d'URL pour un futur déploiement en sous-dossier (vide en local).
+app.config['BASE_URL'] = os.getenv('APP_BASE_URL', '')
+
+@app.context_processor
+def inject_base_url():
+ """Rend BASE_URL disponible dans tous les templates."""
+ return {"BASE_URL": app.config["BASE_URL"]}
+# Enregistrement des contrôleurs (blueprints)
+app.register_blueprint(bp_accueil)
+if __name__ == "__main__":
+ app.run(debug=True)
+
