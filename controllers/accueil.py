@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 from models.db import Session
-from models.dimensions import Region, ProfessionSante
+from models.dimensions import Region, ProfessionSante, Departement, Annee
 
 bp_accueil = Blueprint("accueil", __name__)
 
@@ -10,15 +10,15 @@ def index():
     session = Session()
     try:
         regions = session.query(Region).order_by(Region.libelle).all()
-        professions = (
-            session.query(ProfessionSante)
-            .order_by(ProfessionSante.libelle)
-            .all()
-        )
+        professions = (session.query(ProfessionSante).order_by(ProfessionSante.libelle).all())
+        departements = session.query(Departement).order_by(Departement.code).all()
+
         return render_template(
             "accueil.html",
             regions=regions,
-            professions=professions
+            professions=professions,
+            departements=departements,
+            BASE_URL=""
         )
     finally:
         session.close()
