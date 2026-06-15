@@ -15,9 +15,7 @@ def departements(region_id):
             .order_by(Departement.code)
             .all()
         )
-        return jsonify([
-            {"id": d.id, "code": d.code, "libelle": d.libelle}
-            for d in depts
-        ])
+        # On utilise ici la méthode to_dict() ajoutée dans dimensions.py
+        return jsonify([d.to_dict() for d in depts])
     finally:
         session.close()

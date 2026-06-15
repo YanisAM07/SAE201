@@ -28,6 +28,13 @@ class Departement(Base):
     def __repr__(self):
         return f"{self.code} {self.libelle}"
 
+    # Rajout
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "code": self.code,
+            "libelle": self.libelle
+        }
 
 class ProfessionSante(Base):
     __tablename__ = "profession_sante"

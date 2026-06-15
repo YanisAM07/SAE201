@@ -3,41 +3,62 @@
 {% block titre %}Accueil{% endblock %}
 
 {% block contenu %}
-    <h2>Consulter les effectifs</h2>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h2 class="h4 mb-0 text-primary">Consulter les effectifs</h2>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('effectifs.afficher') }}" method="get">
+                    
+                    <div class="mb-3">
+                        <label for="profession" class="form-label fw-bold">Profession</label>
+                        <select class="form-select" name="profession_id" id="profession" required>
+                            <option value="">-- Choisir --</option>
+                            {% for p in professions %}
+                                <option value="{{ p.id }}">{{ p.libelle }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-    <form action="{{ url_for('effectifs.afficher') }}" method="get">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="region" class="form-label fw-bold">Région</label>
+                            <select class="form-select" name="region_id" id="region" required>
+                                <option value="">-- Choisir --</option>
+                                {% for r in regions %}
+                                    <option value="{{ r.id }}">{{ r.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-        <label for="profession">Profession</label>
-        <select name="profession_id" id="profession" required>
-            <option value="">-- Choisir --</option>
-            {% for p in professions %}
-                <option value="{{ p.id }}">{{ p.libelle }}</option>
-            {% endfor %}
-        </select>
+                        <div class="col-md-6 mb-3">
+                            <label for="departement" class="form-label fw-bold">Département</label>
+                            <select class="form-select" name="departement_id" id="departement" required>
+                                <option value="">-- Choisir une région --</option>
+                            </select>
+                        </div>
+                    </div>
 
-        <label for="region">Région</label>
-        <select name="region_id" id="region" required>
-            <option value="">-- Choisir --</option>
-            {% for r in regions %}
-                <option value="{{ r.id }}">{{ r.libelle }}</option>
-            {% endfor %}
-        </select>
+                    <div class="mb-4">
+                        <label for="annee" class="form-label fw-bold">Année</label>
+                        <select class="form-select" name="annee" id="annee" required>
+                            {% for a in range(2023, 2014, -1) %}
+                                <option value="{{ a }}">{{ a }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-        <label for="departement">Département</label>
-        <select name="departement_id" id="departement" required>
-            <option value="">-- Choisir une région --</option>
-        </select>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Afficher les statistiques</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>const BASE_URL = "{{ BASE_URL }}";</script>
+<script src="{{ url_for('static', filename='js/cascade.js') }}"></script>
 
-        <label for="annee">Année</label>
-        <select name="annee" id="annee" required>
-            {% for a in range(2023, 2014, -1) %}
-                <option value="{{ a }}">{{ a }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit">Afficher les effectifs</button>
-    </form>
-
-    <script>const BASE_URL = "{{ BASE_URL }}";</script>
-    <script src="{{ url_for('static', filename='js/cascade.js') }}"></script>
 {% endblock %}
