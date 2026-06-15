@@ -57,3 +57,19 @@ class AmeliAPI:
         except requests.RequestException as e:
             print(f"[AmeliAPI] Erreur lors de la requête : {e}")
             return []
+    
+    def get_honoraires(self, profession, departement_code):
+        """
+        Récupère les données d'honoraires pour une profession et un département.
+        """
+
+        dataset = "type_honoraire" 
+        where = (
+            f"profession_sante=\"{profession}\" AND "
+            f"departement=\"{departement_code}\""
+        )
+
+        return self._requete(
+            dataset,
+            {"select": "secteur, honoraires_sans_depassement, depassements", "where": where, "limit": 100},
+        )

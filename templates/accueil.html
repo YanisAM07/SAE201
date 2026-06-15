@@ -36,8 +36,8 @@
                         <div class="col-md-6 mb-3">
                             <label for="departement" class="form-label fw-bold">Département</label>
                             <select class="form-select" name="departement_id" id="departement" required>
-                                <option value="">-- Choisir une région --</option>
-                            </select>
+                                <option value="">-- Choisir une région d'abord --</option>
+                                </select>
                         </div>
                     </div>
 
@@ -50,10 +50,16 @@
                         </select>
                     </div>
 
-        <label for="departement">Département</label>
-        <select name="departement_id" id="departement" required>
-            <option value="">-- Choisir une région d'abord --</option>
-            <!-- rempli dynamiquement par cascade.js -->
-        </select>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Afficher les statistiques</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>const BASE_URL = "{{ BASE_URL }}";</script>
+<script src="{{ url_for('static', filename='js/cascade.js') }}"></script>
 
 {% endblock %}

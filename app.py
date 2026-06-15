@@ -4,37 +4,25 @@ from config import Config
 from controllers.accueil import bp_accueil
 from controllers.api import bp_api
 from controllers.effectifs import bp_effectifs
+from controllers.honoraires import bp_honoraires
 
-app = Flask(__name__)  # Crée l'application Web (Flask)
-app.config.from_object(Config)  # charge toutes les variables de configuration définies dans la classe Config
+app = Flask(__name__)
+app.config.from_object(Config)
 
 app.register_blueprint(bp_api)
 app.register_blueprint(bp_accueil)
 app.register_blueprint(bp_effectifs)
+app.register_blueprint(bp_honoraires)
 
-# Préfixe d'URL pour un futur déploiement en sous-dossier (vide en local).
 app.config['BASE_URL'] = os.getenv('APP_BASE_URL', '')
 
 @app.context_processor
 def inject_base_url():
-    """Rend BASE_URL disponible dans tous les templates."""
     return {"BASE_URL": app.config["BASE_URL"]}
-
-# Enregistrement des contrôleurs (blueprints)
 
 @app.errorhandler(404)
 def page_non_trouvee(e):
-    return render_template(
-        "erreur.html",
-        message="Page non trouvée."
-    ), 404
-
-@app.errorhandler(500)
-def erreur_serveur(e):
-    return render_template(
-        "erreur.html",
-        message="Erreur interne. Réessayez plus tard."
-    ), 500
+    return render_template("erreur.html", message="Page non trouvée."), 404
 
 if __name__ == "__main__":
     app.run(debug=True)

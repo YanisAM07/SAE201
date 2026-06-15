@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+<div class="card shadow-sm p-4">
+    <h2>Analyse des Honoraires</h2>
+    <form action="{{ url_for('honoraires.index') }}" method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Profession</label>
+            <select class="form-select" name="profession_id" required>
+                {% for p in professions %}<option value="{{ p.id }}">{{ p.libelle }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Région</label>
+            <select class="form-select" id="region" required>
+                <option value="">-- Choisir une région --</option>
+                {% for r in regions %}<option value="{{ r.id }}">{{ r.libelle }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Département</label>
+            <select class="form-select" name="departement_id" id="departement" required>
+                <option value="">-- Choisir une région d'abord --</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Analyser</button>
+    </form>
+</div>
+
+<script>const BASE_URL = "{{ BASE_URL }}";</script>
+<script src="{{ url_for('static', filename='js/cascade.js') }}"></script>
+
+{% endblock %}
