@@ -1,33 +1,132 @@
 {% extends "base.html" %}
 
 {% block contenu %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="card shadow-sm p-4">
-    <h2>Analyse des Honoraires</h2>
+    <h2 class="mb-4">Analyse des Honoraires</h2>
+    
     <form action="{{ url_for('honoraires.index') }}" method="get" class="row g-3">
         <div class="col-md-4">
-            <label class="form-label">Profession</label>
+            <label class="form-label fw-bold">Profession</label>
             <select class="form-select" name="profession_id" required>
-                {% for p in professions %}<option value="{{ p.id }}">{{ p.libelle }}</option>{% endfor %}
+                <option value="">-- Choisir --</option>
+                {% for p in professions %}
+                    <option value="{{ p.id }}" {% if request.args.get('profession_id')|int == p.id %}selected{% endif %}>{{ p.libelle }}</option>
+                {% endfor %}
             </select>
         </div>
         <div class="col-md-4">
-            <label class="form-label">Région</label>
+            <label class="form-label fw-bold">Région</label>
             <select class="form-select" id="region" required>
                 <option value="">-- Choisir une région --</option>
                 {% for r in regions %}<option value="{{ r.id }}">{{ r.libelle }}</option>{% endfor %}
             </select>
         </div>
         <div class="col-md-4">
-            <label class="form-label">Département</label>
+            <label class="form-label fw-bold">Département</label>
             <select class="form-select" name="departement_id" id="departement" required>
                 <option value="">-- Choisir une région d'abord --</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-primary">Analyser</button>
+        <div class="col-12 mt-4">
+            <button type="submit" class="btn btn-primary w-100">Analyser</button>
+        </div>
     </form>
+
+    {% if resultats %}
+    <div class="mt-5">
+        <h3 class="text-success border-bottom pb-2 mb-4">Résultats de l'analyse</h3>
+
+        <div class="card mb-5 shadow-sm border-0 bg-light">
+            <div class="card-body">
+                <canvas id="monGraphique" height="100"></canvas>
+            </div>
+        </div>
+
+        <script>
+            // Récupération des données depuis Python vers JavaScript via Jinja2
+            const rawData = {{ resultats | tojson }};
+            
+            // Tri chronologique des années pour que le graphique soit bien ordonné de gauche à droite
+            const chartData = rawData.sort((a, b) => parseInt(a.annee) - parseInt(b.annee));
+
+            // Préparation des listes pour les axes (Labels = Années, Data = Montants)
+            const annees = chartData.map(d => d.annee || 'N/A');
+            const honoraires = chartData.map(d => d.hono_sans_depassement_totaux_integer || 0);
+            const depassements = chartData.map(d => d.depassements_totaux_integer || 0);
+
+            // Initialisation et configuration de Chart.js
+            const ctx = document.getElementById('monGraphique').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: annees,
+                    datasets: [
+                        {
+                            label: 'Honoraires Totaux (€)',
+                            data: honoraires,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Dépassements Totaux (€)',
+                            data: depassements,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        </script>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Année</th>
+                        <th>Honoraires Totaux (sans dép.)</th>
+                        <th>Dépassements Totaux</th>
+                        <th>Honoraires Moyens / pro</th>
+                        <th>Dépassements Moyens / pro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in resultats %}
+                    <tr>
+                        <td class="fw-bold">{{ r.annee | default('-', true) }}</td>
+                        
+                        <td>{{ r.hono_sans_depassement_totaux_integer | default('0', true) }} €</td>
+                        <td>{{ r.depassements_totaux_integer | default('0', true) }} €</td>
+                        
+                        <td>{{ r.hono_sans_depassement_moyens_integer | default('0', true) }} €</td>
+                        <td>{{ r.depassements_moyens_integer | default('0', true) }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% elif request.args.get('profession_id') %}
+    <div class="alert alert-warning mt-4" role="alert">
+        ⚠️ Aucune donnée d'honoraires trouvée pour cette recherche précise sur le portail de l'Assurance Maladie.
+    </div>
+    {% endif %}
 </div>
 
-<script>const BASE_URL = "{{ BASE_URL }}";</script>
+<script>const BASE_URL = "";</script>
 <script src="{{ url_for('static', filename='js/cascade.js') }}"></script>
-
 {% endblock %}

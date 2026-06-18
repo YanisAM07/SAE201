@@ -1,6 +1,5 @@
 import requests
 
-
 class AmeliAPI:
     """Service d'accès à l'API data.ameli.fr."""
 
@@ -62,8 +61,7 @@ class AmeliAPI:
         """
         Récupère les données d'honoraires pour une profession et un département.
         """
-
-        dataset = "type_honoraire" 
+        dataset = "honoraires" 
         where = (
             f"profession_sante=\"{profession}\" AND "
             f"departement=\"{departement_code}\""
@@ -71,5 +69,9 @@ class AmeliAPI:
 
         return self._requete(
             dataset,
-            {"select": "secteur, honoraires_sans_depassement, depassements", "where": where, "limit": 100},
+            {
+                "where": where, 
+                "order_by": "annee DESC", 
+                "limit": 100
+            },
         )

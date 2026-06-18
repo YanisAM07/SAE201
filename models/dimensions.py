@@ -22,15 +22,13 @@ class Region(Base):
 
 class Departement(Base):
     __tablename__ = "departement"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    code = Column(String(10), nullable=False, unique=True)
-    libelle = Column(String(100), nullable=False)
+    
+    id = Column(Integer, primary_key=True)
     region_id = Column(Integer, ForeignKey("region.id"), nullable=False)
+    code = Column(String(3), nullable=False)
+    libelle = Column(String(255), nullable=False)
 
-    def __repr__(self):
-        return f"{self.code} {self.libelle}"
-
-    # Rajout
+    #rajout
     def to_dict(self):
         return {
             "id": self.id,
