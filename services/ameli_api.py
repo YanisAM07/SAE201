@@ -75,3 +75,31 @@ class AmeliAPI:
                 "limit": 100
             },
         )
+    
+    def get_national_densites(self, profession, annee):
+        """
+        Récupère la densité médicale des départements pour une profession et une année données.
+        """
+        dataset = "demographie-effectifs-et-les-densites"
+        
+        # Le retour à TA formule d'origine qui marchait parfaitement !
+        where = (
+            f"profession_sante=\"{profession}\" AND "
+            f"year(annee)={annee} AND "
+            f"libelle_classe_age=\"Tout âge\" AND "
+            f"libelle_sexe=\"tout sexe\""
+        )
+
+        resultats_bruts = self._requete(
+            dataset,
+            {
+                "where": where,
+                "order_by": "densite DESC",
+                "limit": 100  # On garde absolument ça pour ne pas faire planter l'API
+            },
+        )
+        
+        # On filtre la France entière en Python
+        resultats_propres = [r for r in resultats_bruts if str(r.get("departement")) != "999"]
+        
+        return resultats_propres

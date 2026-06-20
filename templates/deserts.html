@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="card shadow-sm p-4 mb-4">
+    <h2 class="mb-4 text-danger"><i class="bi bi-geo-alt"></i> Analyse des Déserts Médicaux</h2>
+    
+    <form action="{{ url_for('deserts.index') }}" method="get" class="row g-3 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Profession médicale</label>
+            <select class="form-select" name="profession_id" required>
+                <option value="">-- Choisir une profession --</option>
+                {% for p in professions %}
+                    <option value="{{ p.id }}" {% if request.args.get('profession_id')|int == p.id %}selected{% endif %}>{{ p.libelle }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Année d'analyse</label>
+            <select class="form-select" name="annee" required>
+                {% for a in range(2023, 2014, -1) %}
+                    <option value="{{ a }}" {% if annee_selectionnee|int == a %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-danger w-100">Visualiser</button>
+        </div>
+    </form>
+
+    {% if resultats %}
+    <div class="mt-5">
+        <h3 class="text-secondary border-bottom pb-2 mb-4">
+            Situation pour : <span class="text-primary">{{ profession_selectionnee.libelle }}</span> en {{ annee_selectionnee }}
+        </h3>
+
+        <div class="row mb-4">
+            <div class="col-md-4 mx-auto">
+                <div class="card bg-dark text-white text-center p-3 shadow-sm">
+                    <h6 class="text-uppercase text-muted mb-1">Moyenne Nationale</h6>
+                    <div class="display-6 fw-bold text-warning">{{ moyenne_nationale }}</div>
+                    <small>professionnels pour 100k hab.</small>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-4" id="desertsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" id="carte-tab" data-bs-toggle="tab" data-bs-target="#carte-pane" type="button" role="tab">
+                     Carte de France des Déserts
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats-pane" type="button" role="tab">
+                     Graphiques & Classement
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="desertsTabsContent">
+            
+            <div class="tab-pane fade show active" id="carte-pane" role="tabpanel">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+                            <span class="small text-muted">🔴 Densité faible (Désert) &nbsp;|&nbsp; 🟢 Densité forte (Sur-doté)</span>
+                        </div>
+                        <div id="carteFrance" style="height: 600px;" class="rounded bg-light border"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="stats-pane" role="tabpanel">
+                <div class="card shadow-sm border-0 bg-light mb-5">
+                    <div class="card-body">
+                        <h5 class="card-title text-center fw-bold mb-3">Extrêmes : Les 5 zones les plus dotées vs Les 5 plus critiques</h5>
+                        <canvas id="graphiqueDeserts" height="100"></canvas>
+                    </div>
+                </div>
+
+                <h4 class="h5 fw-bold mb-3"><i class="bi bi-list-ol"></i> Classement exhaustif des départements</h4>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped align-middle text-center">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Rang</th>
+                                <th>Code</th>
+                                <th>Département</th>
+                                <th>Effectif global</th>
+                                <th>Densité (pour 100k hab.)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in resultats %}
+                            <tr {% if r in top_5 %}class="table-success-light"{% elif r in flop_5 %}class="table-danger-light"{% endif %}>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td>{{ r.departement }}</td>
+                                <td class="text-start ps-3">{{ r.libelle_departement }}</td>
+                                <td>{{ r.effectif | default(0, true) }}</td>
+                                <td class="fw-bold">{{ r.densite | default(0, true) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% elif request.args.get('profession_id') %}
+    <div class="alert alert-warning mt-4" role="alert">
+        Aucune donnée démographique renvoyée pour cette recherche.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    {% if resultats %}
+    // 1. Récupération et indexation des données Ameli
+    const apiData = {{ resultats | tojson }};
+    const dataMap = new Map();
+    
+    let maxDensite = 0;
+    let minDensite = 99999;
+
+    apiData.forEach(item => {
+        let code = String(item.departement).trim();
+        // Normalisation des codes (ex: "1" -> "01") pour correspondre au géo-référencement
+        if (code.length === 1 && !isNaN(code)) code = "0" + code;
+        
+        const dens = parseFloat(item.densite) || 0;
+        if (dens > maxDensite) maxDensite = dens;
+        if (dens < minDensite && dens > 0) minDensite = dens;
+        
+        dataMap.set(code, item);
+    });
+
+    // 2. Fonction de colorisation dynamique (Rouge pour les déserts -> Jaune -> Vert)
+    function getColor(densite) {
+        if (!densite) return '#e0e0e0'; // Gris si pas de données
+        const pct = (densite - minDensite) / (maxDensite - minDensite || 1);
+        if (pct < 0.2) return '#d73027'; // Rouge critique
+        if (pct < 0.4) return '#f46d43'; // Orange
+        if (pct < 0.6) return '#fdae61'; // Jaune orange
+        if (pct < 0.8) return '#a6d96a'; // Vert clair
+        return '#1a9850';                // Vert soutenu
+    }
+
+    // 3. Initialisation de la carte Leaflet centrée sur la France
+    const map = L.map('carteFrance').setView([46.603354, 1.888334], 6);
+    
+    // Ajout d'un fond de carte neutre et épuré (idéal pour faire ressortir les couleurs thématiques)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(map);
+
+    // 4. Chargement asynchrone des contours géographiques simplifiés de la France
+    fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson')
+        .then(response => response.json())
+        .then(geojsonData => {
+            L.geoJson(geojsonData, {
+                style: function(feature) {
+                    const codeDept = feature.properties.code;
+                    const stats = dataMap.get(codeDept);
+                    const densite = stats ? parseFloat(stats.densite) : 0;
+                    return {
+                        fillColor: getColor(densite),
+                        weight: 1,
+                        opacity: 1,
+                        color: '#ffffff',
+                        fillOpacity: 0.75
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const codeDept = feature.properties.code;
+                    const nomDept = feature.properties.nom;
+                    const stats = dataMap.get(codeDept);
+                    
+                    let popupContent = `<strong>${nomDept} (${codeDept})</strong><br/>`;
+                    if (stats) {
+                        popupContent += `• Densité : <strong>${stats.densite}</strong> / 100k hab.<br/>`;
+                        popupContent += `• Effectif total : <strong>${stats.effectif || 0}</strong> pro.`;
+                    } else {
+                        popupContent += `Aucune donnée disponible.`;
+                    }
+                    layer.bindPopup(popupContent);
+                    
+                    // Effets visuels lors du survol de la souris
+                    layer.on({
+                        mouseover: function(e) {
+                            const l = e.target;
+                            l.setStyle({ fillOpacity: 0.9, weight: 2, color: '#666' });
+                            l.bringToFront();
+                        },
+                        mouseout: function(e) {
+                            this.setStyle({ fillOpacity: 0.75, weight: 1, color: '#ffffff' });
+                        }
+                    });
+                }
+            }).addTo(map);
+        });
+
+    // Correction ergonomique vitale : Recalcul de la géométrie de Leaflet lors du basculement d'onglets
+    document.getElementById('carte-tab').addEventListener('shown.bs.tab', function () {
+        map.invalidateSize();
+    });
+
+    // 5. Code d'initialisation de Chart.js pour l'onglet statistiques
+    const topData = {{ top_5 | tojson }};
+    const flopData = {{ flop_5 | tojson }};
+    const chartLabels = [...topData.map(d => '🟢 ' + d.libelle_departement), ...flopData.map(d => '🔴 ' + d.libelle_departement)];
+    const chartDensites = [...topData.map(d => d.densite), ...flopData.map(d => d.densite)];
+    const chartCouleurs = [...Array(5).fill('rgba(40, 167, 69, 0.7)'), ...Array(5).fill('rgba(220, 53, 69, 0.7)')];
+
+    const ctx = document.getElementById('graphiqueDeserts').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Densité (pour 100 000 habitants)',
+                data: chartDensites,
+                backgroundColor: chartCouleurs,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+    {% endif %}
+</script>
+
+<style>
+    .table-success-light { background-color: rgba(40, 167, 69, 0.08) !important; }
+    .table-danger-light { background-color: rgba(220, 53, 69, 0.08) !important; }
+</style>
+{% endblock %}
