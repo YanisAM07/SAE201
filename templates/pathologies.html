@@ -8,7 +8,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <div class="card shadow-sm p-4 mb-4">
-    <h2 class="mb-4 text-purple" style="color:#6f42c1;"><i class="bi bi-activity"></i> Carte des Pathologies</h2>
+    <h2 class="mb-4 text-purple-custom"><i class="bi bi-activity"></i> Carte des Pathologies</h2>
 
     <form action="{{ url_for('pathologies.index') }}" method="get" class="row g-3 align-items-end">
         <div class="col-md-4">
@@ -38,14 +38,14 @@
             </select>
         </div>
         <div class="col-md-2">
-            <button type="submit" class="btn w-100 text-white" style="background-color:#6f42c1;">Visualiser</button>
+            <button type="submit" class="btn w-100 text-white btn-purple-custom">Visualiser</button>
         </div>
     </form>
 
     {% if resultats %}
     <div class="mt-5">
         <h3 class="text-secondary border-bottom pb-2 mb-4">
-            Situation pour : <span style="color:#6f42c1;">{{ patho_selectionnee }}</span> en {{ annee_selectionnee }}
+            Situation pour : <span class="text-purple-custom">{{ patho_selectionnee }}</span> en {{ annee_selectionnee }}
             {% if region_selectionnee %} — <span class="text-danger">{{ region_selectionnee.libelle }}</span>{% endif %}
         </h3>
 
@@ -70,7 +70,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-2 px-2">
                             <span class="small text-muted">🟢 Prévalence faible &nbsp;|&nbsp; 🔴 Prévalence forte</span>
                         </div>
-                        <div id="carteFrance" style="height: 600px;" class="rounded bg-light border"></div>
+                        <div id="carteFrance" class="rounded bg-light border" style="height: 600px;"></div>
                     </div>
                 </div>
             </div>
@@ -123,7 +123,6 @@
     {% if resultats %}
     const apiData = {{ resultats | tojson }};
     const dataMap = new Map();
-
     const codesRegion = {{ codes_departements_region | tojson }};
     const codesRegionNorm = codesRegion.map(c => String(c).trim().padStart(2, "0"));
 
@@ -141,7 +140,6 @@
         dataMap.set(code, item);
     });
 
-    // Ici le rouge = forte prévalence (inverse de la carte des déserts)
     function getColor(prevalence) {
         if (!prevalence) return '#e0e0e0';
         const pct = (prevalence - minPrev) / (maxPrev - minPrev || 1);
@@ -240,9 +238,4 @@
     });
     {% endif %}
 </script>
-
-<style>
-    .table-success-light { background-color: rgba(40, 167, 69, 0.08) !important; }
-    .table-danger-light { background-color: rgba(220, 53, 69, 0.08) !important; }
-</style>
 {% endblock %}

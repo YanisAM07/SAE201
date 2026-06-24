@@ -5,28 +5,27 @@
 {% block contenu %}
     <h2>{{ prof.libelle }} – {{ dept.code }} {{ dept.libelle }} – {{ annee }}</h2>
 
-    <!-- Bouton d'export CSV (Fonctionnalité avancée) -->
     <p>
-        <a href="{{ url_for('effectifs.export_csv', profession_id=prof.id, departement_id=dept.id) }}" style="display: inline-block; padding: 10px 15px; background-color: #2E74B5; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        <a href="{{ url_for('effectifs.export_csv', profession_id=prof.id, departement_id=dept.id) }}" class="btn-export-csv">
             ⬇️ Exporter l'évolution en CSV
         </a>
     </p>
 
     {% if resultats %}
-        <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 2rem;">
+        <table class="table-effectifs">
             <thead>
-                <tr style="border-bottom: 2px solid #ddd;">
-                    <th style="padding: 8px;">Année</th>
-                    <th style="padding: 8px;">Effectif</th>
-                    <th style="padding: 8px;">Densité</th>
+                <tr>
+                    <th>Année</th>
+                    <th>Effectif</th>
+                    <th>Densité</th>
                 </tr>
             </thead>
             <tbody>
                 {% for r in resultats %}
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px;">{{ r.annee }}</td>
-                        <td style="padding: 8px;">{{ r.effectif }}</td>
-                        <td style="padding: 8px;">{{ r.densite }}</td>
+                    <tr>
+                        <td>{{ r.annee }}</td>
+                        <td>{{ r.effectif }}</td>
+                        <td>{{ r.densite }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

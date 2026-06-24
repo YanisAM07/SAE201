@@ -1,26 +1,212 @@
+/* ==========================================================================
+   VARIABLES DE COULEUR (Charte Ameli Nouvelle Génération & Thème Infirmière)
+   ========================================================================== */
+:root {
+    --ameli-blue: #004994;        /* Bleu institutionnel Ameli */
+    --ameli-light-blue: #e6f0fa;  /* Fond bleu très clair Ameli */
+    --nurse-pink: #f48fb1;        /* Rose infirmière doux */
+    --nurse-pink-dark: #c2185b;   /* Rose foncé / Magenta pour les accents importants */
+    --nurse-pink-light: #fce4ec;  /* Fond rose très clair */
+    --health-mint: #26a69a;       /* Vert santé optionnel pour les validations */
+    --dark-text: #2c3e50;         /* Couleur du texte principal pour un bon contraste */
+    --bg-light: #fcf9fa;          /* Fond de page légèrement teinté de rose */
+}
+
+/* ==========================================================================
+   STYLES GÉNÉRAUX & CORPS DE PAGE
+   ========================================================================== */
 body {
- font-family: "Segoe UI", sans-serif;
- margin: 0;
- color: #333;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    margin: 0;
+    color: var(--dark-text);
+    background-color: var(--bg-light) !important;
+    line-height: 1.6;
 }
-header {
- background: #2E74B5;
- color: white;
- padding: 1rem 2rem;
-}
-header nav a {
- color: white;
- margin-right: 1rem;
- text-decoration: none;
-}
+
 main {
- padding: 2rem;
- max-width: 900px;
- margin: auto;
+    padding: 2.5rem 1.5rem;
+    max-width: 1140px;
+    margin: auto;
 }
+
+h2, h3, h4 {
+    color: var(--ameli-blue);
+    font-weight: 700;
+}
+
+h2 {
+    border-left: 5px solid var(--nurse-pink);
+    padding-left: 12px;
+    margin-bottom: 1.5rem;
+}
+
+/* ==========================================================================
+   BARRE DE NAVIGATION (Style Base.html & Ameli)
+   ========================================================================== */
+.navbar {
+    background-color: var(--ameli-blue) !important;
+    border-bottom: 4px solid var(--nurse-pink); /* Ligne de séparation style infirmière */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+
+.navbar-brand {
+    font-weight: 800 !important;
+    letter-spacing: 0.5px;
+}
+
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #fff !important;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ==========================================================================
+   COMPOSANTS : CARTES (Cards) & FORMULAIRES
+   ========================================================================== */
+.card {
+    border: none !important;
+    border-top: 4px solid var(--ameli-blue) !important; /* Haut de carte bleu Ameli */
+    background-color: #ffffff;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(194, 24, 91, 0.05) !important; /* Ombre subtile rosée */
+}
+
+.card-header {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid var(--nurse-pink-light) !important;
+}
+
+.form-label {
+    color: var(--ameli-blue);
+}
+
+.form-select, .form-control {
+    border: 1px solid #ced4da !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: var(--nurse-pink) !important;
+    box-shadow: 0 0 0 0.25rem rgba(244, 143, 177, 0.25) !important;
+}
+
+/* ==========================================================================
+   BOUTONS & INTERACTIONS
+   ========================================================================== */
+/* Bouton bleu principal (Style Ameli original) */
+.btn-primary {
+    background-color: var(--ameli-blue) !important;
+    border-color: var(--ameli-blue) !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    transition: all 0.2s !important;
+}
+.btn-primary:hover {
+    background-color: #00366d !important;
+    transform: translateY(-1px);
+}
+
+/* Bouton Rose Infirmière (Pour les déserts ou actions de santé) */
+.btn-danger, .btn-purple-custom {
+    background-color: var(--nurse-pink-dark) !important;
+    border-color: var(--nurse-pink-dark) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+}
+.btn-danger:hover, .btn-purple-custom:hover {
+    background-color: #8c0e3e !important;
+    border-color: #8c0e3e !important;
+}
+
+/* Bouton spécifique d'exportation */
+.btn-export-csv {
+    display: inline-block;
+    padding: 10px 18px;
+    background-color: var(--nurse-pink-light);
+    color: var(--nurse-pink-dark) !important;
+    text-decoration: none;
+    border: 1px solid var(--nurse-pink);
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.btn-export-csv:hover {
+    background-color: var(--nurse-pink);
+    color: white !important;
+}
+
+/* ==========================================================================
+   TABLEAUX (Data & Classements)
+   ========================================================================== */
+.table-effectifs {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.table-effectifs thead tr {
+    background-color: var(--ameli-light-blue);
+    border-bottom: 2px solid var(--ameli-blue);
+}
+.table-effectifs th {
+    color: var(--ameli-blue);
+    font-weight: 600;
+    padding: 12px;
+}
+.table-effectifs td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+/* Style pour les onglets Bootstrap (Tabs) */
+.nav-tabs .nav-link {
+    color: var(--ameli-blue) !important;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+}
+.nav-tabs .nav-link.active {
+    color: var(--nurse-pink-dark) !important;
+    border-bottom: 3px solid var(--nurse-pink-dark) !important;
+    background: transparent !important;
+}
+
+/* États de lignes colorées pour les classements (Déserts et Pathologies) */
+.table-success-light {
+    background-color: rgba(38, 166, 154, 0.1) !important; /* Vert santé */
+    color: #004d40;
+}
+.table-danger-light {
+    background-color: rgba(244, 143, 177, 0.15) !important; /* Rose alerte */
+    color: var(--nurse-pink-dark);
+}
+
+/* Badges et encadrés spécifiques (ex: Moyenne nationale) */
+.bg-dark {
+    background-color: var(--ameli-blue) !important;
+    border-bottom: 4px solid var(--nurse-pink);
+}
+
+/* ==========================================================================
+   FOOTER (Pied de page)
+   ========================================================================== */
 footer {
- text-align: center;
- padding: 1rem;
- color: #777;
- border-top: 1px solid #ddd;
+    text-align: center;
+    padding: 1.5rem;
+    color: #666;
+    background-color: #fff;
+    border-top: 1px solid var(--nurse-pink-light);
+    margin-top: 3rem;
+    font-size: 0.9rem;
 }
