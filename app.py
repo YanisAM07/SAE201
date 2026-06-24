@@ -7,6 +7,7 @@ from controllers.effectifs import bp_effectifs
 from controllers.honoraires import bp_honoraires
 from controllers.deserts import bp_deserts
 from controllers.pathologies import bp_pathologies
+from controllers.comparaison import bp_comparaison
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -17,12 +18,19 @@ app.register_blueprint(bp_effectifs)
 app.register_blueprint(bp_honoraires)
 app.register_blueprint(bp_deserts)
 app.register_blueprint(bp_pathologies)
+app.register_blueprint(bp_comparaison)
 
 app.config['BASE_URL'] = os.getenv('APP_BASE_URL', '')
 
 @app.context_processor
 def inject_base_url():
-    return {"BASE_URL": app.config["BASE_URL"]}
+    base = app.config.get("BASE_URL", "")
+    # Normalisation : on garantit un "/" au début (sauf si vide), pour éviter
+    # que les fetch() côté JS ne résolvent l'URL comme un chemin relatif
+    # (ce qui doublait le préfixe en production, ex: /tuto/tuto/api/...).
+    if base and not base.startswith("/"):
+        base = "/" + base
+    return {"BASE_URL": base}
 
 @app.errorhandler(404)
 def page_non_trouvee(e):
