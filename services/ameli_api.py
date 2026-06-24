@@ -8,6 +8,7 @@ class AmeliAPI:
     def __init__(self, timeout=10):
         self._timeout = timeout
         self._session = requests.Session()
+        self._cache_colonnes = {}  # évite de re-sonder le schéma à chaque appel
 
     def get_effectifs(self, profession, departement_code, annee):
         """
@@ -56,12 +57,12 @@ class AmeliAPI:
         except requests.RequestException as e:
             print(f"[AmeliAPI] Erreur lors de la requête : {e}")
             return []
-    
+
     def get_honoraires(self, profession, departement_code):
         """
         Récupère les données d'honoraires pour une profession et un département.
         """
-        dataset = "honoraires" 
+        dataset = "honoraires"
         where = (
             f"profession_sante=\"{profession}\" AND "
             f"departement=\"{departement_code}\""
@@ -70,19 +71,18 @@ class AmeliAPI:
         return self._requete(
             dataset,
             {
-                "where": where, 
-                "order_by": "annee DESC", 
+                "where": where,
+                "order_by": "annee DESC",
                 "limit": 100
             },
         )
-    
+
     def get_national_densites(self, profession, annee):
         """
         Récupère la densité médicale des départements pour une profession et une année données.
         """
         dataset = "demographie-effectifs-et-les-densites"
-        
-        # Le retour à TA formule d'origine qui marchait parfaitement !
+
         where = (
             f"profession_sante=\"{profession}\" AND "
             f"year(annee)={annee} AND "
@@ -95,11 +95,81 @@ class AmeliAPI:
             {
                 "where": where,
                 "order_by": "densite DESC",
-                "limit": 100  # On garde absolument ça pour ne pas faire planter l'API
+                "limit": 100
             },
         )
-        
+
         # On filtre la France entière en Python
         resultats_propres = [r for r in resultats_bruts if str(r.get("departement")) != "999"]
-        
+
         return resultats_propres
+
+    # ─────────────────────────────────────────────────────────────
+    #  NOUVEAU : Pathologies (dataset "effectifs" de Data pathologies)
+    # ─────────────────────────────────────────────────────────────
+
+    #: Catégories officielles de pathologies / traitements / épisodes de soins
+    #: (valeurs exactes confirmées via l'API data.ameli.fr, champ patho_niv1)
+    CATEGORIES_PATHOLOGIES = [
+        "Maladies cardioneurovasculaires",
+        "Traitements du risque vasculaire (hors pathologies)",
+        "Diabète",
+        "Cancers",
+        "Maladies psychiatriques",
+        "Traitements psychotropes (hors pathologies)",
+        "Maladies neurologiques",
+        "Maladies respiratoires chroniques (hors mucoviscidose)",
+        "Maladies inflammatoires ou rares ou infection VIH",
+        "Insuffisance rénale chronique terminale",
+        "Maladies du foie ou du pancréas (hors mucoviscidose)",
+        "Affections de longue durée (dont 31 et 32) pour d'autres causes",
+        "Hospitalisation pour Covid-19",
+        "Maternité (avec ou sans pathologies)",
+        "Traitements antalgiques ou anti-inflammatoires (hors pathologies, traitements, maternité ou hospitalisations)",
+        "Hospitalisations hors pathologies repérées (avec ou sans pathologies, traitements ou maternité)",
+    ]
+
+    def get_pathologie_national(self, patho_libelle, annee, sexe="tous sexes"):
+        """
+        Récupère, pour une catégorie de pathologie (patho_niv1) et une année
+        données, les effectifs de patients et la prévalence par département,
+        France entière.
+
+        Champs réels du dataset "effectifs" de data.ameli.fr (vérifiés en
+        direct) :
+            annee (texte, ex: "2019"), patho_niv1, patho_niv2, patho_niv3,
+            top, cla_age_5, libelle_classe_age (ex: "tous âges"),
+            sexe, libelle_sexe (ex: "tous sexes"), region, dept,
+            ntop (effectif de patients concernés), npop (population totale),
+            prev (prévalence, en %), niveau_prioritaire, tri.
+
+        Le dataset fournit déjà une ligne agrégée par département avec
+        libelle_classe_age="tous âges" : on l'utilise directement plutôt que
+        de sommer les tranches d'âge nous-mêmes.
+        """
+        dataset = "effectifs"
+
+        where = (
+            f'patho_niv1="{patho_libelle}" AND '
+            f'year(annee)={annee} AND '
+            f'libelle_sexe="{sexe}" AND '
+            f'libelle_classe_age="tous âges"'
+        )
+
+        rows = self._requete(
+            dataset,
+            {"where": where, "limit": 100},
+        )
+
+        resultats = []
+        for r in rows:
+            code_dept = str(r.get("dept", "")).strip()
+            if code_dept in ("999", "", "None"):
+                continue
+            resultats.append({
+                "departement": code_dept,
+                "effectif": r.get("ntop"),
+                "prevalence": r.get("prev"),
+            })
+
+        return resultats
