@@ -2,34 +2,34 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block titre %}Données de santé{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Données de Santé</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
-<body class="bg-light">
+<body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('accueil.index') }}">⚕️ Données de Santé</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('accueil.index') }}">Effectifs</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('honoraires.index') }}">Honoraires</a></li>
-                    <li class="nav-item"><a class="nav-link fw-bold" href="{{ url_for('deserts.index') }}">Déserts Médicaux</a></li>
-                </ul>
-            </div>
+    <header class="navbar-top d-flex justify-content-between align-items-center">
+        <div>
+            <a href="{{ url_for('presentation.index') }}" class="brand-title">⚕️ Données de Santé</a>
         </div>
+    </header>
+
+    <nav class="navbar-bottom">
+        <button class="btn btn-light me-4"><i class="bi bi-list fs-5"></i></button> 
+        
+        <a href="{{ url_for('presentation.index') }}" class="btn-nav-pill fw-bold">Accueil</a>
+        <a href="{{ url_for('accueil.index') }}" class="btn-nav-pill">Effectifs</a>
+        <a href="{{ url_for('honoraires.index') }}" class="btn-nav-pill">Honoraires</a>
+        <a href="{{ url_for('deserts.index') }}" class="btn-nav-pill">Déserts Médicaux</a>
+        <a href="{{ url_for('demographie.index') }}" class="btn-nav-pill">Profil Démographique</a>
     </nav>
 
-    <main class="container">
+    <main class="container-fluid py-4">
         {% block contenu %}{% endblock %}
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    {% block scripts %}{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

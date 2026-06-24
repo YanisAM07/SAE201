@@ -140,13 +140,15 @@
 
     // 2. Fonction de colorisation dynamique (Rouge pour les déserts -> Jaune -> Vert)
     function getColor(densite) {
-        if (!densite) return '#e0e0e0'; // Gris si pas de données
+        if (!densite) return '#a2d2df'; // Bleu très clair si pas de données
         const pct = (densite - minDensite) / (maxDensite - minDensite || 1);
-        if (pct < 0.2) return '#d73027'; // Rouge critique
-        if (pct < 0.4) return '#f46d43'; // Orange
-        if (pct < 0.6) return '#fdae61'; // Jaune orange
-        if (pct < 0.8) return '#a6d96a'; // Vert clair
-        return '#1a9850';                // Vert soutenu
+        
+        // Palette inspirée de ta maquette (du cyan clair au bleu foncé)
+        if (pct < 0.2) return '#00e5ff'; // Cyan vif (Désert)
+        if (pct < 0.4) return '#00b0ff'; // Bleu clair
+        if (pct < 0.6) return '#2979ff'; // Bleu moyen
+        if (pct < 0.8) return '#3d5afe'; // Bleu soutenu
+        return '#25218a';                // Bleu nuit (Très bien doté)
     }
 
     // 3. Initialisation de la carte Leaflet centrée sur la France

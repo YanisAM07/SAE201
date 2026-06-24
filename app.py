@@ -6,6 +6,9 @@ from controllers.api import bp_api
 from controllers.effectifs import bp_effectifs
 from controllers.honoraires import bp_honoraires
 from controllers.deserts import bp_deserts
+from controllers.demographie import bp_demographie
+from controllers.presentation import bp_presentation
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -15,6 +18,8 @@ app.register_blueprint(bp_accueil)
 app.register_blueprint(bp_effectifs)
 app.register_blueprint(bp_honoraires)
 app.register_blueprint(bp_deserts)
+app.register_blueprint(bp_demographie)
+app.register_blueprint(bp_presentation)
 
 app.config['BASE_URL'] = os.getenv('APP_BASE_URL', '')
 

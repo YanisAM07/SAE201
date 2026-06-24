@@ -1,26 +1,69 @@
+/* Fond global de la page */
 body {
- font-family: "Segoe UI", sans-serif;
- margin: 0;
- color: #333;
+    background-color: #fde8f5 !important; /* Rose pastel de la maquette */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-header {
- background: #2E74B5;
- color: white;
- padding: 1rem 2rem;
+
+/* En-tête supérieur (Blanc) */
+.navbar-top {
+    background-color: #ffffff;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
 }
-header nav a {
- color: white;
- margin-right: 1rem;
- text-decoration: none;
+
+.brand-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
 }
-main {
- padding: 2rem;
- max-width: 900px;
- margin: auto;
+
+/* En-tête inférieur (Gris) */
+.navbar-bottom {
+    background-color: #d9d9d9;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
 }
-footer {
- text-align: center;
- padding: 1rem;
- color: #777;
- border-top: 1px solid #ddd;
+
+/* Boutons de navigation (Pilules grises) */
+.btn-nav-pill {
+    background-color: #bfbfbf;
+    color: #000;
+    border-radius: 20px;
+    padding: 8px 20px;
+    margin: 0 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.btn-nav-pill:hover, .btn-nav-pill.active {
+    background-color: #a6a6a6;
+    color: #000;
+}
+
+/* Bouton Sign Out (Noir) */
+.btn-signout {
+    background-color: #000000;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: bold;
+    text-decoration: none;
+    margin-left: auto; /* Pousse le bouton à droite */
+}
+
+/* Conteneurs et cartes blanches */
+.card, .white-panel {
+    background-color: #ffffff;
+    border-radius: 25px !important; /* Coins très arrondis comme sur la maquette */
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* Champs de recherche et sélecteurs */
+.form-select, .form-control {
+    border-radius: 20px;
+    border: 1px solid #ccc;
 }

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+<div class="container py-4">
+
+    <div class="card p-5 text-center mb-5 border-0 position-relative overflow-hidden shadow-sm">
+        <div class="position-relative z-1">
+            <span class="badge bg-primary-light text-primary px-3 py-2 rounded-pill fw-bold mb-3">Projet Académique — SAE 2.01</span>
+            <h1 class="display-4 fw-extrabold text-dark mb-3">Exploration & Analyse des Données de Santé</h1>
+            <p class="lead text-muted mx-auto" style="max-width: 750px;">
+                Une plateforme décisionnelle dynamique connectée en temps réel aux flux open-data de l'Assurance Maladie pour cartographier l'accès aux soins et analyser les structures financières médicales en France.
+            </p>
+        </div>
+    </div>
+
+    <h3 class="fw-bold text-dark mb-4 text-center">Les Modules d'Analyse</h3>
+    <div class="row g-4 mb-5">
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 p-4 text-center border-0 shadow-sm hover-translate">
+                <div class="icon-shape bg-soft-blue mx-auto mb-3">
+                    <i class="bi bi-person-vcard fs-3 text-primary"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Suivi des Effectifs</h5>
+                <p class="small text-muted mb-0">Recensement global et filtrage fin des professionnels de santé par maillage territorial.</p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 p-4 text-center border-0 shadow-sm hover-translate">
+                <div class="icon-shape bg-soft-green mx-auto mb-3">
+                    <i class="bi bi-graph-up-arrow fs-3 text-success"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Analyse Financière</h5>
+                <p class="small text-muted mb-0">Visualisation chronologique des honoraires fixes et suivi précis des dépassements d'honoraires.</p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 p-4 text-center border-0 shadow-sm hover-translate">
+                <div class="icon-shape bg-soft-red mx-auto mb-3">
+                    <i class="bi bi-geo-alt fs-3 text-danger"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Déserts Médicaux</h5>
+                <p class="small text-muted mb-0">Cartographie choroplèthe interactive de la France pour identifier les fractures de densité médicale.</p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 p-4 text-center border-0 shadow-sm hover-translate">
+                <div class="icon-shape bg-soft-purple mx-auto mb-3">
+                    <i class="bi bi-people fs-3 text-info"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Profils Mixte & Âge</h5>
+                <p class="small text-muted mb-0">Étude structurelle des pyramides des âges et indicateurs de mixité des praticiens.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card p-5 border-0 shadow-sm mb-5 bg-white">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h3 class="fw-bold text-dark mb-3">Une architecture robuste et moderne</h3>
+                <p class="text-muted">
+                    L'application s'appuie sur une séparation stricte des couches (Modèle-Vue-Contrôleur) afin de garantir une maintenance évolutive. Les données de structure locale cohabitent de manière transparente avec les requêtes distantes asynchrones.
+                </p>
+                <ul class="list-unstyled mt-3">
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Backend :</strong> Python / Flask Framework</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Persistance :</strong> MySQL / SQLAlchemy ORM</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Data-Viz :</strong> Chart.js & Leaflet.js (Moteur de cartes GeoJSON)</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Source de confiance :</strong> Flux API Open Data Assurance Maladie</li>
+                </ul>
+            </div>
+            <div class="col-lg-6 text-center mt-4 mt-lg-0">
+                <div class="p-4 bg-light rounded-4 d-inline-block shadow-inner">
+                    <span class="fs-1 px-3"></span>
+                    <span class="fs-1 px-3"></span>
+                    <span class="fs-1 px-3"></span>
+                    <span class="fs-1 px-3"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-5 border-0 shadow-sm text-center bg-white">
+        <h3 class="fw-bold text-dark mb-2">Membres de l'équipe</h3>
+        <p class="text-muted mb-5">Conception, modélisation de la base de données et développement applicatif</p>
+        
+        <div class="row g-4 justify-content-center">
+            <div class="col-sm-6 col-md-3">
+                <div class="p-3 border rounded-4 bg-light">
+                    <div class="fs-2 mb-2"></div>
+                    <h6 class="fw-bold mb-1">Louka Grosjean</h6>
+                    <small class="text-primary fw-semibold">Développeur</small>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="p-3 border rounded-4 bg-light">
+                    <div class="fs-2 mb-2"></div>
+                    <h6 class="fw-bold mb-1">Semih Gurbuz</h6>
+                    <small class="text-primary fw-semibold">Développeur</small>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="p-3 border rounded-4 bg-light">
+                    <div class="fs-2 mb-2"></div>
+                    <h6 class="fw-bold mb-1">Yanis Ait Meziane</h6>
+                    <small class="text-primary fw-semibold">Développeur</small>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="p-3 border rounded-4 bg-light">
+                    <div class="fs-2 mb-2"></div>
+                    <h6 class="fw-bold mb-1">Gustavo Silva Do Santos</h6>
+                    <small class="text-primary fw-semibold">Développeur</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .fw-extrabold { font-weight: 800; }
+    .bg-primary-light { background-color: rgba(13, 110, 253, 0.1); }
+    
+    /* Styles pour les ronds d'icônes */
+    .icon-shape {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    .bg-soft-blue { background-color: rgba(13, 110, 253, 0.12); }
+    .bg-soft-green { background-color: rgba(25, 135, 84, 0.12); }
+    .bg-soft-red { background-color: rgba(220, 53, 69, 0.12); }
+    .bg-soft-purple { background-color: rgba(13, 202, 240, 0.12); }
+
+    /* Petit effet d'animation au survol des modules */
+    .hover-translate {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-translate:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08) !important;
+    }
+    .shadow-inner { box-shadow: inset 0 2px 4px rgba(0,0,0,0.04); }
+</style>
+
+{% endblock %}
