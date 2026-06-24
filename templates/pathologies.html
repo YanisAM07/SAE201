@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block titre %}Pathologies{% endblock %}
+
+{% block contenu %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="card shadow-sm p-4 mb-4">
+    <h2 class="mb-4 text-purple-custom"><i class="bi bi-activity"></i> Carte des Pathologies</h2>
+
+    <form action="{{ url_for('pathologies.index') }}" method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Catégorie de pathologie</label>
+            <select class="form-select" name="patho" required>
+                <option value="">-- Choisir une catégorie --</option>
+                {% for c in categories %}
+                    <option value="{{ c }}" {% if patho_selectionnee == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Région <span class="text-muted small">(optionnel)</span></label>
+            <select class="form-select" name="region_id">
+                <option value="">-- France entière --</option>
+                {% for r in regions %}
+                    <option value="{{ r.id }}" {% if region_selectionnee and region_selectionnee.id == r.id %}selected{% endif %}>{{ r.libelle }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Année</label>
+            <select class="form-select" name="annee" required>
+                {% for a in range(2023, 2014, -1) %}
+                    <option value="{{ a }}" {% if annee_selectionnee|int == a %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn w-100 text-white btn-purple-custom">Visualiser</button>
+        </div>
+    </form>
+
+    {% if resultats %}
+    <div class="mt-5">
+        <h3 class="text-secondary border-bottom pb-2 mb-4">
+            Situation pour : <span class="text-purple-custom">{{ patho_selectionnee }}</span> en {{ annee_selectionnee }}
+            {% if region_selectionnee %} — <span class="text-danger">{{ region_selectionnee.libelle }}</span>{% endif %}
+        </h3>
+
+        <ul class="nav nav-tabs mb-4" id="pathosTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" id="carte-tab" data-bs-toggle="tab" data-bs-target="#carte-pane" type="button" role="tab">
+                     Carte de France
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats-pane" type="button" role="tab">
+                     Graphiques & Classement
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pathosTabsContent">
+
+            <div class="tab-pane fade show active" id="carte-pane" role="tabpanel">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+                            <span class="small text-muted">🟢 Prévalence faible &nbsp;|&nbsp; 🔴 Prévalence forte</span>
+                        </div>
+                        <div id="carteFrance" class="rounded bg-light border" style="height: 600px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="stats-pane" role="tabpanel">
+                <div class="card shadow-sm border-0 bg-light mb-5">
+                    <div class="card-body">
+                        <h5 class="card-title text-center fw-bold mb-3">Extrêmes : Les 5 départements les plus / moins touchés</h5>
+                        <canvas id="graphiquePathos" height="100"></canvas>
+                    </div>
+                </div>
+
+                <h4 class="h5 fw-bold mb-3"><i class="bi bi-list-ol"></i> Classement {% if region_selectionnee %}régional{% else %}exhaustif{% endif %} des départements</h4>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped align-middle text-center">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Rang</th>
+                                <th>Département</th>
+                                <th>Effectif de patients</th>
+                                <th>Prévalence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in resultats %}
+                            <tr {% if r in top_5 %}class="table-danger-light"{% elif r in flop_5 %}class="table-success-light"{% endif %}>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td>{{ r.departement }}</td>
+                                <td>{{ r.effectif | default('N/A', true) }}</td>
+                                <td class="fw-bold">{{ r.prevalence | default('N/A', true) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% elif request.args.get('patho') %}
+    <div class="alert alert-warning mt-4" role="alert">
+        Aucune donnée renvoyée pour cette recherche. Si le problème persiste, le nom des colonnes
+        du jeu de données data.ameli a peut-être changé — voir le commentaire dans
+        <code>services/ameli_api.py</code> (méthode <code>get_pathologie_national</code>) pour le diagnostiquer.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    {% if resultats %}
+    const apiData = {{ resultats | tojson }};
+    const dataMap = new Map();
+    const codesRegion = {{ codes_departements_region | tojson }};
+    const codesRegionNorm = codesRegion.map(c => String(c).trim().padStart(2, "0"));
+
+    let maxPrev = 0;
+    let minPrev = 99999;
+
+    apiData.forEach(item => {
+        let code = String(item.departement).trim();
+        if (code.length === 1 && !isNaN(code)) code = "0" + code;
+
+        const prev = parseFloat(item.prevalence) || 0;
+        if (prev > maxPrev) maxPrev = prev;
+        if (prev < minPrev && prev > 0) minPrev = prev;
+
+        dataMap.set(code, item);
+    });
+
+    function getColor(prevalence) {
+        if (!prevalence) return '#e0e0e0';
+        const pct = (prevalence - minPrev) / (maxPrev - minPrev || 1);
+        if (pct < 0.2) return '#1a9850';
+        if (pct < 0.4) return '#a6d96a';
+        if (pct < 0.6) return '#fdae61';
+        if (pct < 0.8) return '#f46d43';
+        return '#d73027';
+    }
+
+    const map = L.map('carteFrance').setView([46.603354, 1.888334], 6);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(map);
+
+    fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson')
+        .then(response => response.json())
+        .then(geojsonData => {
+            const features = codesRegionNorm.length
+                ? geojsonData.features.filter(f => codesRegionNorm.includes(f.properties.code))
+                : geojsonData.features;
+
+            const calque = L.geoJson({ type: "FeatureCollection", features: features }, {
+                style: function(feature) {
+                    const codeDept = feature.properties.code;
+                    const stats = dataMap.get(codeDept);
+                    const prevalence = stats ? parseFloat(stats.prevalence) : 0;
+                    return {
+                        fillColor: getColor(prevalence),
+                        weight: 1,
+                        opacity: 1,
+                        color: '#ffffff',
+                        fillOpacity: 0.75
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const codeDept = feature.properties.code;
+                    const nomDept = feature.properties.nom;
+                    const stats = dataMap.get(codeDept);
+
+                    let popupContent = `<strong>${nomDept} (${codeDept})</strong><br/>`;
+                    if (stats) {
+                        popupContent += `• Prévalence : <strong>${stats.prevalence ?? 'N/A'}</strong><br/>`;
+                        popupContent += `• Effectif de patients : <strong>${stats.effectif ?? 'N/A'}</strong>`;
+                    } else {
+                        popupContent += `Aucune donnée disponible.`;
+                    }
+                    layer.bindPopup(popupContent);
+
+                    layer.on({
+                        mouseover: function(e) {
+                            const l = e.target;
+                            l.setStyle({ fillOpacity: 0.9, weight: 2, color: '#666' });
+                            l.bringToFront();
+                        },
+                        mouseout: function(e) {
+                            this.setStyle({ fillOpacity: 0.75, weight: 1, color: '#ffffff' });
+                        }
+                    });
+                }
+            }).addTo(map);
+
+            if (codesRegionNorm.length && calque.getBounds().isValid()) {
+                map.fitBounds(calque.getBounds(), { padding: [20, 20] });
+            }
+        });
+
+    document.getElementById('carte-tab').addEventListener('shown.bs.tab', function () {
+        map.invalidateSize();
+    });
+
+    const topData = {{ top_5 | tojson }};
+    const flopData = {{ flop_5 | tojson }};
+    const chartLabels = [...topData.map(d => '🔴 Dpt ' + d.departement), ...flopData.map(d => '🟢 Dpt ' + d.departement)];
+    const chartValeurs = [...topData.map(d => d.prevalence), ...flopData.map(d => d.prevalence)];
+    const chartCouleurs = [...Array(5).fill('rgba(220, 53, 69, 0.7)'), ...Array(5).fill('rgba(40, 167, 69, 0.7)')];
+
+    const ctx = document.getElementById('graphiquePathos').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Prévalence',
+                data: chartValeurs,
+                backgroundColor: chartCouleurs,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

@@ -12,18 +12,21 @@
 
     <header class="navbar-top d-flex justify-content-between align-items-center">
         <div>
-            <a href="{{ url_for('presentation.index') }}" class="brand-title">⚕️ Données de Santé</a>
+            <a href="{{ url_for('presentation.index') }}" class="brand-title text-decoration-none text-dark">⚕️ Données de Santé</a>
         </div>
     </header>
 
-    <nav class="navbar-bottom">
-        <button class="btn btn-light me-4"><i class="bi bi-list fs-5"></i></button> 
+    <nav class="navbar-bottom d-flex flex-wrap align-items-center gap-2">
+        <button class="btn btn-light me-3"><i class="bi bi-list fs-5"></i></button> 
         
         <a href="{{ url_for('presentation.index') }}" class="btn-nav-pill fw-bold">Accueil</a>
         <a href="{{ url_for('accueil.index') }}" class="btn-nav-pill">Effectifs</a>
         <a href="{{ url_for('honoraires.index') }}" class="btn-nav-pill">Honoraires</a>
         <a href="{{ url_for('deserts.index') }}" class="btn-nav-pill">Déserts Médicaux</a>
         <a href="{{ url_for('demographie.index') }}" class="btn-nav-pill">Profil Démographique</a>
+        
+        <a href="{{ url_for('pathologies.index') }}" class="btn-nav-pill text-primary fw-bold">Pathologies</a>
+        <a href="{{ url_for('comparaison.index') }}" class="btn-nav-pill text-primary fw-bold">Comparaison</a>
     </nav>
 
     <main class="container-fluid py-4">

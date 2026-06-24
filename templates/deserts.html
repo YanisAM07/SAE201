@@ -7,9 +7,9 @@
 
 <div class="card shadow-sm p-4 mb-4">
     <h2 class="mb-4 text-danger"><i class="bi bi-geo-alt"></i> Analyse des Déserts Médicaux</h2>
-    
+
     <form action="{{ url_for('deserts.index') }}" method="get" class="row g-3 align-items-end">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label class="form-label fw-bold">Profession médicale</label>
             <select class="form-select" name="profession_id" required>
                 <option value="">-- Choisir une profession --</option>
@@ -18,7 +18,16 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Région <span class="text-muted small">(optionnel)</span></label>
+            <select class="form-select" name="region_id">
+                <option value="">-- France entière --</option>
+                {% for r in regions %}
+                    <option value="{{ r.id }}" {% if region_selectionnee and region_selectionnee.id == r.id %}selected{% endif %}>{{ r.libelle }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
             <label class="form-label fw-bold">Année d'analyse</label>
             <select class="form-select" name="annee" required>
                 {% for a in range(2023, 2014, -1) %}
@@ -35,12 +44,13 @@
     <div class="mt-5">
         <h3 class="text-secondary border-bottom pb-2 mb-4">
             Situation pour : <span class="text-primary">{{ profession_selectionnee.libelle }}</span> en {{ annee_selectionnee }}
+            {% if region_selectionnee %} — <span class="text-danger">{{ region_selectionnee.libelle }}</span>{% endif %}
         </h3>
 
         <div class="row mb-4">
             <div class="col-md-4 mx-auto">
                 <div class="card bg-dark text-white text-center p-3 shadow-sm">
-                    <h6 class="text-uppercase text-muted mb-1">Moyenne Nationale</h6>
+                    <h6 class="text-uppercase text-muted mb-1">Moyenne {% if region_selectionnee %}Régionale{% else %}Nationale{% endif %}</h6>
                     <div class="display-6 fw-bold text-warning">{{ moyenne_nationale }}</div>
                     <small>professionnels pour 100k hab.</small>
                 </div>
@@ -61,14 +71,14 @@
         </ul>
 
         <div class="tab-content" id="desertsTabsContent">
-            
+
             <div class="tab-pane fade show active" id="carte-pane" role="tabpanel">
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body p-2">
                         <div class="d-flex justify-content-between align-items-center mb-2 px-2">
                             <span class="small text-muted">🔴 Densité faible (Désert) &nbsp;|&nbsp; 🟢 Densité forte (Sur-doté)</span>
                         </div>
-                        <div id="carteFrance" style="height: 600px;" class="rounded bg-light border"></div>
+                        <div id="carteFrance" class="rounded bg-light border" style="height: 600px;"></div>
                     </div>
                 </div>
             </div>
@@ -81,7 +91,7 @@
                     </div>
                 </div>
 
-                <h4 class="h5 fw-bold mb-3"><i class="bi bi-list-ol"></i> Classement exhaustif des départements</h4>
+                <h4 class="h5 fw-bold mb-3"><i class="bi bi-list-ol"></i> Classement {% if region_selectionnee %}régional{% else %}exhaustif{% endif %} des départements</h4>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered table-striped align-middle text-center">
                         <thead class="table-secondary">
@@ -119,26 +129,25 @@
 
 <script>
     {% if resultats %}
-    // 1. Récupération et indexation des données Ameli
     const apiData = {{ resultats | tojson }};
     const dataMap = new Map();
-    
+    const codesRegion = {{ codes_departements_region | tojson }};
+    const codesRegionNorm = codesRegion.map(c => String(c).trim().padStart(2, "0"));
+
     let maxDensite = 0;
     let minDensite = 99999;
 
     apiData.forEach(item => {
         let code = String(item.departement).trim();
-        // Normalisation des codes (ex: "1" -> "01") pour correspondre au géo-référencement
         if (code.length === 1 && !isNaN(code)) code = "0" + code;
-        
+
         const dens = parseFloat(item.densite) || 0;
         if (dens > maxDensite) maxDensite = dens;
         if (dens < minDensite && dens > 0) minDensite = dens;
-        
+
         dataMap.set(code, item);
     });
 
-    // 2. Fonction de colorisation dynamique (Rouge pour les déserts -> Jaune -> Vert)
     function getColor(densite) {
         if (!densite) return '#a2d2df'; // Bleu très clair si pas de données
         const pct = (densite - minDensite) / (maxDensite - minDensite || 1);
@@ -151,19 +160,22 @@
         return '#25218a';                // Bleu nuit (Très bien doté)
     }
 
-    // 3. Initialisation de la carte Leaflet centrée sur la France
     const map = L.map('carteFrance').setView([46.603354, 1.888334], 6);
-    
-    // Ajout d'un fond de carte neutre et épuré (idéal pour faire ressortir les couleurs thématiques)
+
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(map);
 
-    // 4. Chargement asynchrone des contours géographiques simplifiés de la France
+    const calqueRegion = L.featureGroup();
+
     fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson')
         .then(response => response.json())
         .then(geojsonData => {
-            L.geoJson(geojsonData, {
+            const features = codesRegionNorm.length
+                ? geojsonData.features.filter(f => codesRegionNorm.includes(f.properties.code))
+                : geojsonData.features;
+
+            const calque = L.geoJson({ type: "FeatureCollection", features: features }, {
                 style: function(feature) {
                     const codeDept = feature.properties.code;
                     const stats = dataMap.get(codeDept);
@@ -180,7 +192,7 @@
                     const codeDept = feature.properties.code;
                     const nomDept = feature.properties.nom;
                     const stats = dataMap.get(codeDept);
-                    
+
                     let popupContent = `<strong>${nomDept} (${codeDept})</strong><br/>`;
                     if (stats) {
                         popupContent += `• Densité : <strong>${stats.densite}</strong> / 100k hab.<br/>`;
@@ -189,8 +201,7 @@
                         popupContent += `Aucune donnée disponible.`;
                     }
                     layer.bindPopup(popupContent);
-                    
-                    // Effets visuels lors du survol de la souris
+
                     layer.on({
                         mouseover: function(e) {
                             const l = e.target;
@@ -203,14 +214,16 @@
                     });
                 }
             }).addTo(map);
+
+            if (codesRegionNorm.length && calque.getBounds().isValid()) {
+                map.fitBounds(calque.getBounds(), { padding: [20, 20] });
+            }
         });
 
-    // Correction ergonomique vitale : Recalcul de la géométrie de Leaflet lors du basculement d'onglets
     document.getElementById('carte-tab').addEventListener('shown.bs.tab', function () {
         map.invalidateSize();
     });
 
-    // 5. Code d'initialisation de Chart.js pour l'onglet statistiques
     const topData = {{ top_5 | tojson }};
     const flopData = {{ flop_5 | tojson }};
     const chartLabels = [...topData.map(d => '🟢 ' + d.libelle_departement), ...flopData.map(d => '🔴 ' + d.libelle_departement)];
@@ -237,9 +250,4 @@
     });
     {% endif %}
 </script>
-
-<style>
-    .table-success-light { background-color: rgba(40, 167, 69, 0.08) !important; }
-    .table-danger-light { background-color: rgba(220, 53, 69, 0.08) !important; }
-</style>
 {% endblock %}
