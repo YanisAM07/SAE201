@@ -67,17 +67,19 @@
         </div>
 
         <script>
-            // Données pour le Sexe
+            // Récupération des données pour le graphique "Sexe"
             const dataSexe = {{ profil.repartition_sexe | tojson }};
             const labelsSexe = dataSexe.map(d => d.sexe);
             const effectifsSexe = dataSexe.map(d => d.effectif);
 
+            // Initialisation du graphique en anneau (doughnut)
             new Chart(document.getElementById('chartSexe'), {
                 type: 'doughnut',
                 data: {
                     labels: labelsSexe,
                     datasets: [{
                         data: effectifsSexe,
+                        // Couleurs personnalisées pour les segments
                         backgroundColor: ['#36a2eb', '#ff6384', '#ffcc56'],
                         hoverOffset: 4
                     }]
@@ -85,12 +87,12 @@
                 options: { responsive: true }
             });
 
-            // Données pour l'Âge
+            // Récupération des données pour le graphique "Âge"
             const dataAge = {{ profil.repartition_age | tojson }};
-            // Tri logique des tranches d'âge pour l'affichage (ex: moins de 30 ans en premier)
             const labelsAge = dataAge.map(d => d.classe_age);
             const effectifsAge = dataAge.map(d => d.effectif);
 
+            // Initialisation de l'histogramme (bar chart)
             new Chart(document.getElementById('chartAge'), {
                 type: 'bar',
                 data: {
@@ -98,6 +100,7 @@
                     datasets: [{
                         label: 'Nombre de professionnels',
                         data: effectifsAge,
+                        // Style des barres
                         backgroundColor: 'rgba(75, 192, 192, 0.7)',
                         borderColor: 'rgba(75, 192, 192, 1)',
                         borderWidth: 1,
@@ -106,6 +109,7 @@
                 },
                 options: {
                     responsive: true,
+                    // Forcer l'axe Y à démarrer à 0
                     scales: { y: { beginAtZero: true } }
                 }
             });

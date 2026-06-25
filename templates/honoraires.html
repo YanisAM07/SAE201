@@ -45,18 +45,18 @@
         </div>
 
         <script>
-            // Récupération des données depuis Python vers JavaScript via Jinja2
+            // Récupération et conversion des données Python au format JSON pour JavaScript
             const rawData = {{ resultats | tojson }};
             
-            // Tri chronologique des années pour que le graphique soit bien ordonné de gauche à droite
+            // Tri chronologique des données (ordre croissant des années)
             const chartData = rawData.sort((a, b) => parseInt(a.annee) - parseInt(b.annee));
 
-            // Préparation des listes pour les axes (Labels = Années, Data = Montants)
+            // Extraction des données pour alimenter les différents axes du graphique
             const annees = chartData.map(d => d.annee || 'N/A');
             const honoraires = chartData.map(d => d.hono_sans_depassement_totaux_integer || 0);
             const depassements = chartData.map(d => d.depassements_totaux_integer || 0);
 
-            // Initialisation et configuration de Chart.js
+            // Initialisation du graphique en barres empilées/côte à côte
             const ctx = document.getElementById('monGraphique').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
@@ -86,6 +86,7 @@
                     plugins: {
                         legend: { position: 'top' }
                     },
+                    // Assurer que l'axe des ordonnées commence à 0 pour ne pas fausser l'échelle visuelle
                     scales: {
                         y: { beginAtZero: true }
                     }

@@ -57,14 +57,20 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Récupération et transformation des données Python en format exploitable par JavaScript (JSON)
     const donnees = {{ evolution|tojson }};
+    
+    // Initialisation et configuration du graphique linéaire
     new Chart(document.getElementById("graphique"), {
         type: "line",
         data: {
+            // Extraction des années pour l'axe des abscisses (X)
             labels: donnees.map(d => d.annee),
             datasets: [{
                 label: "Effectif",
+                // Extraction des valeurs d'effectif pour l'axe des ordonnées (Y)
                 data: donnees.map(d => d.effectif),
+                // Paramétrage visuel de la courbe (couleur, remplissage, points)
                 borderColor: "#0d6efd",
                 backgroundColor: "rgba(13, 110, 253, 0.1)",
                 fill: true,
@@ -75,9 +81,11 @@
         },
         options: {
             responsive: true,
+            // Configuration des axes, notamment pour forcer le démarrage à zéro
             scales: { 
                 y: { beginAtZero: true } 
             },
+            // Configuration de la légende du graphique
             plugins: {
                 legend: {
                     display: true,

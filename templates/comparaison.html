@@ -173,19 +173,25 @@
 </div>
 
 <script>
+// URL de base pour les requêtes API (injectée via Jinja2)
 const BASE_URL = "{{ BASE_URL }}";
 
+// Fonction générique pour gérer la mise à jour des départements selon la région
 function activerCascade(idRegion, idDepartement) {
     const region = document.getElementById(idRegion);
     const departement = document.getElementById(idDepartement);
 
+    // Écouteur sur le changement de sélection de la région
     region.addEventListener("change", async function () {
+        // Réinitialisation du champ de destination
         departement.innerHTML = '<option value="">-- Choisir --</option>';
         if (!this.value) return;
 
+        // Appel API pour récupérer les nouveaux départements
         const response = await fetch(`${BASE_URL}/api/departements/${this.value}`);
         const data = await response.json();
 
+        // Remplissage du select avec les données JSON
         data.forEach(dept => {
             let option = document.createElement("option");
             option.value = dept.id;
@@ -195,31 +201,39 @@ function activerCascade(idRegion, idDepartement) {
     });
 }
 
+// Initialisation des listes liées pour les formulaires A et B
 activerCascade("region_a", "departement_a");
 activerCascade("region_b", "departement_b");
 
+// Script de génération du graphique (exécuté uniquement si les données sont présentes)
 {% if cote_a and cote_b %}
+// Récupération des données Python sous format JSON
 const a = {{ cote_a.evolution | tojson }};
 const b = {{ cote_b.evolution | tojson }};
 
+// Fusion et tri de toutes les années uniques présentes dans A et B pour l'axe X
 const annees = [...new Set([...a.map(x => x.annee), ...b.map(x => x.annee)])].sort();
 
+// Fonction utilitaire pour récupérer l'effectif d'une année précise dans un set de données
 function valeur(data, annee) {
     const ligne = data.find(x => x.annee === annee);
     return ligne ? ligne.effectif : null;
 }
 
+// Création du graphique comparatif avec Chart.js
 new Chart(document.getElementById("graphiqueComparaison"), {
     type: "line",
     data: {
         labels: annees,
         datasets: [
+            // Courbe A (Bleue)
             {
                 label: "{{ cote_a.prof.libelle }} - {{ cote_a.dept.code }}",
                 data: annees.map(x => valeur(a, x)),
                 borderColor: "#0d6efd",
                 tension: 0.3
             },
+            // Courbe B (Rouge)
             {
                 label: "{{ cote_b.prof.libelle }} - {{ cote_b.dept.code }}",
                 data: annees.map(x => valeur(b, x)),
@@ -230,6 +244,7 @@ new Chart(document.getElementById("graphiqueComparaison"), {
     },
     options: {
         responsive: true,
+        // Assure que l'axe des Y commence toujours à 0 pour une comparaison juste
         scales: { y: { beginAtZero: true } }
     }
 });

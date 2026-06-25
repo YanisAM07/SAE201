@@ -121,16 +121,20 @@
 
 <script>
     {% if resultats %}
+    // Conversion et préparation des données transmises par Python
     const apiData = {{ resultats | tojson }};
     const dataMap = new Map();
     const codesRegion = {{ codes_departements_region | tojson }};
     const codesRegionNorm = codesRegion.map(c => String(c).trim().padStart(2, "0"));
 
+    // Variables pour l'étalonnage de l'échelle de couleurs de la carte
     let maxPrev = 0;
     let minPrev = 99999;
 
+    // Remplissage du dictionnaire (Map) et calcul des valeurs min/max de prévalence
     apiData.forEach(item => {
         let code = String(item.departement).trim();
+        // Normalisation des codes départements à un chiffre (ex: "1" devient "01")
         if (code.length === 1 && !isNaN(code)) code = "0" + code;
 
         const prev = parseFloat(item.prevalence) || 0;
@@ -140,9 +144,12 @@
         dataMap.set(code, item);
     });
 
+    // Fonction d'attribution d'une couleur en fonction de la prévalence relative
     function getColor(prevalence) {
         if (!prevalence) return '#e0e0e0';
         const pct = (prevalence - minPrev) / (maxPrev - minPrev || 1);
+        
+        // Échelle de couleurs : Vert (faible) à Rouge (fort)
         if (pct < 0.2) return '#1a9850';
         if (pct < 0.4) return '#a6d96a';
         if (pct < 0.6) return '#fdae61';
@@ -150,19 +157,24 @@
         return '#d73027';
     }
 
+    // Initialisation de la carte Leaflet centrée sur la France
     const map = L.map('carteFrance').setView([46.603354, 1.888334], 6);
 
+    // Ajout du fond de carte (basemap)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(map);
 
+    // Récupération asynchrone des tracés géographiques (GeoJSON) des départements
     fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson')
         .then(response => response.json())
         .then(geojsonData => {
+            // Filtrage des tracés si une région a été sélectionnée
             const features = codesRegionNorm.length
                 ? geojsonData.features.filter(f => codesRegionNorm.includes(f.properties.code))
                 : geojsonData.features;
 
+            // Ajout de la couche GeoJSON à la carte avec application des styles
             const calque = L.geoJson({ type: "FeatureCollection", features: features }, {
                 style: function(feature) {
                     const codeDept = feature.properties.code;
@@ -176,6 +188,7 @@
                         fillOpacity: 0.75
                     };
                 },
+                // Définition des interactions (popup et survol) pour chaque département
                 onEachFeature: function(feature, layer) {
                     const codeDept = feature.properties.code;
                     const nomDept = feature.properties.nom;
@@ -190,6 +203,7 @@
                     }
                     layer.bindPopup(popupContent);
 
+                    // Effets visuels au survol de la souris
                     layer.on({
                         mouseover: function(e) {
                             const l = e.target;
@@ -203,21 +217,27 @@
                 }
             }).addTo(map);
 
+            // Redimensionnement automatique de la carte pour englober la zone sélectionnée
             if (codesRegionNorm.length && calque.getBounds().isValid()) {
                 map.fitBounds(calque.getBounds(), { padding: [20, 20] });
             }
         });
 
+    // Évitement des bugs d'affichage de Leaflet dans un onglet inactif au chargement
     document.getElementById('carte-tab').addEventListener('shown.bs.tab', function () {
         map.invalidateSize();
     });
 
+    // Préparation des données pour le graphique des extrêmes
     const topData = {{ top_5 | tojson }};
     const flopData = {{ flop_5 | tojson }};
+    
+    // Construction des étiquettes et des données du graphique
     const chartLabels = [...topData.map(d => '🔴 Dpt ' + d.departement), ...flopData.map(d => '🟢 Dpt ' + d.departement)];
     const chartValeurs = [...topData.map(d => d.prevalence), ...flopData.map(d => d.prevalence)];
     const chartCouleurs = [...Array(5).fill('rgba(220, 53, 69, 0.7)'), ...Array(5).fill('rgba(40, 167, 69, 0.7)')];
 
+    // Initialisation du graphique en barres
     const ctx = document.getElementById('graphiquePathos').getContext('2d');
     new Chart(ctx, {
         type: 'bar',

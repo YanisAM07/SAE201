@@ -129,14 +129,17 @@
 
 <script>
     {% if resultats %}
+    // Transmission des données brutes depuis Python vers le contexte JavaScript
     const apiData = {{ resultats | tojson }};
     const dataMap = new Map();
     const codesRegion = {{ codes_departements_region | tojson }};
     const codesRegionNorm = codesRegion.map(c => String(c).trim().padStart(2, "0"));
 
+    // Variables pour stocker les bornes permettant de générer l'échelle de couleurs
     let maxDensite = 0;
     let minDensite = 99999;
 
+    // Parcours et nettoyage des données API, alimentation du Map pour un accès rapide (O(1))
     apiData.forEach(item => {
         let code = String(item.departement).trim();
         if (code.length === 1 && !isNaN(code)) code = "0" + code;
@@ -148,11 +151,12 @@
         dataMap.set(code, item);
     });
 
+    // Fonction déterminant la couleur de remplissage d'un département en fonction de sa densité
     function getColor(densite) {
         if (!densite) return '#a2d2df'; // Bleu très clair si pas de données
         const pct = (densite - minDensite) / (maxDensite - minDensite || 1);
         
-        // Palette inspirée de ta maquette (du cyan clair au bleu foncé)
+        // Palette inspirée de la maquette (du cyan clair au bleu foncé)
         if (pct < 0.2) return '#00e5ff'; // Cyan vif (Désert)
         if (pct < 0.4) return '#00b0ff'; // Bleu clair
         if (pct < 0.6) return '#2979ff'; // Bleu moyen
@@ -160,21 +164,26 @@
         return '#25218a';                // Bleu nuit (Très bien doté)
     }
 
+    // Initialisation de la carte sur les coordonnées centrales de la France
     const map = L.map('carteFrance').setView([46.603354, 1.888334], 6);
 
+    // Ajout d'une couche de tuiles esthétique et claire (basemap)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(map);
 
     const calqueRegion = L.featureGroup();
 
+    // Appel réseau pour récupérer le fichier contenant les frontières géographiques des départements
     fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson')
         .then(response => response.json())
         .then(geojsonData => {
+            // Filtrage des données GeoJSON si l'utilisateur a sélectionné une région spécifique
             const features = codesRegionNorm.length
                 ? geojsonData.features.filter(f => codesRegionNorm.includes(f.properties.code))
                 : geojsonData.features;
 
+            // Instanciation de la couche GeoJSON avec le style conditionnel
             const calque = L.geoJson({ type: "FeatureCollection", features: features }, {
                 style: function(feature) {
                     const codeDept = feature.properties.code;
@@ -188,11 +197,13 @@
                         fillOpacity: 0.75
                     };
                 },
+                // Configuration des interactions pour chaque département (Polygone)
                 onEachFeature: function(feature, layer) {
                     const codeDept = feature.properties.code;
                     const nomDept = feature.properties.nom;
                     const stats = dataMap.get(codeDept);
 
+                    // Contenu du popup qui s'affichera au clic
                     let popupContent = `<strong>${nomDept} (${codeDept})</strong><br/>`;
                     if (stats) {
                         popupContent += `• Densité : <strong>${stats.densite}</strong> / 100k hab.<br/>`;
@@ -202,6 +213,7 @@
                     }
                     layer.bindPopup(popupContent);
 
+                    // Mise en valeur de la bordure du département lors du survol
                     layer.on({
                         mouseover: function(e) {
                             const l = e.target;
@@ -215,21 +227,27 @@
                 }
             }).addTo(map);
 
+            // Ajustement de la vue de la carte pour qu'elle cadre parfaitement les départements affichés
             if (codesRegionNorm.length && calque.getBounds().isValid()) {
                 map.fitBounds(calque.getBounds(), { padding: [20, 20] });
             }
         });
 
+    // Correction du problème d'affichage (tuiles grises) de Leaflet lors du changement d'onglet
     document.getElementById('carte-tab').addEventListener('shown.bs.tab', function () {
         map.invalidateSize();
     });
 
+    // Préparation des données pour le graphique des extrêmes (Top/Flop)
     const topData = {{ top_5 | tojson }};
     const flopData = {{ flop_5 | tojson }};
     const chartLabels = [...topData.map(d => '🟢 ' + d.libelle_departement), ...flopData.map(d => '🔴 ' + d.libelle_departement)];
     const chartDensites = [...topData.map(d => d.densite), ...flopData.map(d => d.densite)];
+    
+    // Assignation de la couleur verte pour le top et rouge pour le flop
     const chartCouleurs = [...Array(5).fill('rgba(40, 167, 69, 0.7)'), ...Array(5).fill('rgba(220, 53, 69, 0.7)')];
 
+    // Génération du graphique des extrêmes avec Chart.js
     const ctx = document.getElementById('graphiqueDeserts').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
@@ -245,6 +263,7 @@
         options: {
             responsive: true,
             plugins: { legend: { display: false } },
+            // Permet de forcer l'axe Y à commencer à 0
             scales: { y: { beginAtZero: true } }
         }
     });

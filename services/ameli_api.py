@@ -3,10 +3,13 @@ import requests
 class AmeliAPI:
     """Service d'accès à l'API data.ameli.fr."""
 
+    # Point d'entrée de base de l'API open data
     BASE_URL = "https://data.ameli.fr/api/explore/v2.1/catalog/datasets"
 
     def __init__(self, timeout=1):
+        """Initialisation du client HTTP."""
         self._timeout = timeout
+        # Utilisation d'une session pour optimiser les requêtes multiples
         self._session = requests.Session()
         self._cache_colonnes = {}  # évite de re-sonder le schéma à chaque appel
 
@@ -17,6 +20,7 @@ class AmeliAPI:
         # Sécurité : on force les départements comme "1" à s'écrire "01"
         dept = str(departement_code).strip().zfill(2)
         
+        # Construction de la clause de filtrage SQL-like
         where = (
             f"profession_sante=\"{profession}\" AND "
             f"departement=\"{dept}\" AND "
@@ -25,6 +29,7 @@ class AmeliAPI:
             f"libelle_sexe=\"tout sexe\""
         )
 
+        # Exécution de la requête sur le jeu de données démographique
         return self._requete(
             "demographie-effectifs-et-les-densites",
             {"select": "annee,effectif,densite", "where": where, "limit": 100},
@@ -33,6 +38,7 @@ class AmeliAPI:
 
     def get_evolution_effectifs(self, profession, departement_code):
         """Effectifs sur toutes les années disponibles (pour un graphique)."""
+        # Filtrage global sans spécifier l'année pour récupérer l'historique
         where = (
             f"profession_sante=\"{profession}\" AND "
             f"departement=\"{departement_code}\" AND "
@@ -53,13 +59,17 @@ class AmeliAPI:
     def _requete(self, dataset, params, nb_essais=3):
         """Méthode privée : effectue une requête GET avec retry automatique."""
         url = f"{self.BASE_URL}/{dataset}/records"
+        
+        # Boucle de tentatives en cas d'échec ou de timeout
         for essai in range(1, nb_essais + 1):
             try:
                 resp = self._session.get(url, params=params, timeout=self._timeout)
                 resp.raise_for_status()
+                # Renvoi de la liste des résultats contenue dans le JSON
                 return resp.json().get("results", [])
             except requests.exceptions.Timeout:
                 print(f"[AmeliAPI] Timeout essai {essai}/{nb_essais} sur {dataset}")
+                # Si le dernier essai échoue, on renvoie une liste vide
                 if essai == nb_essais:
                     return []
             except requests.RequestException as e:
@@ -72,6 +82,8 @@ class AmeliAPI:
         Récupère les données d'honoraires pour une profession et un département.
         """
         dataset = "honoraires"
+        
+        # Filtre sur la profession et le département cible
         where = (
             f"profession_sante=\"{profession}\" AND "
             f"departement=\"{departement_code}\""
@@ -81,7 +93,7 @@ class AmeliAPI:
             dataset,
             {
                 "where": where,
-                "order_by": "annee DESC",
+                "order_by": "annee DESC",  # Tri antéchronologique
                 "limit": 100
             },
         )
@@ -92,6 +104,7 @@ class AmeliAPI:
         """
         dataset = "demographie-effectifs-et-les-densites"
 
+        # Filtre global sur la France entière pour une année précise
         where = (
             f"profession_sante=\"{profession}\" AND "
             f"year(annee)={annee} AND "
@@ -99,6 +112,7 @@ class AmeliAPI:
             f"libelle_sexe=\"tout sexe\""
         )
 
+        # Récupération triée par densité décroissante
         resultats_bruts = self._requete(
             dataset,
             {
@@ -108,7 +122,7 @@ class AmeliAPI:
             },
         )
 
-        # On filtre la France entière en Python
+        # On filtre la France entière en Python (le code 999 correspond à la moyenne nationale)
         resultats_propres = [r for r in resultats_bruts if str(r.get("departement")) != "999"]
         
         return resultats_propres
@@ -127,7 +141,7 @@ class AmeliAPI:
             f"year(annee)={annee}"
         )
 
-        # On récupère l'ensemble des lignes correspondantes
+        # On récupère l'ensemble des lignes correspondantes sans filtre d'âge ou de sexe
         resultats_bruts = self._requete(
             dataset,
             {
@@ -140,6 +154,7 @@ class AmeliAPI:
         donnees_sexe = []
         donnees_age = []
 
+        # Parcours des résultats bruts pour ventilation
         for r in resultats_bruts:
             lib_age = r.get("libelle_classe_age", "Tout âge")
             lib_sexe = r.get("libelle_sexe", "tout sexe")
@@ -158,6 +173,7 @@ class AmeliAPI:
                     "effectif": r.get("effectif", 0)
                 })
 
+        # Renvoi des données formatées
         return {
             "repartition_sexe": donnees_sexe,
             "repartition_age": donnees_age
@@ -210,6 +226,7 @@ class AmeliAPI:
         """
         dataset = "effectifs"
 
+        # Construction de la requête pour cibler la pathologie globale sur une année
         where = (
             f'patho_niv1="{patho_libelle}" AND '
             f'year(annee)={annee} AND '
@@ -217,16 +234,21 @@ class AmeliAPI:
             f'libelle_classe_age="tous âges"'
         )
 
+        # Lancement de la requête HTTP
         rows = self._requete(
             dataset,
             {"where": where, "limit": 100},
         )
 
         resultats = []
+        # Nettoyage et formatage des résultats renvoyés par l'API
         for r in rows:
             code_dept = str(r.get("dept", "")).strip()
+            # On ignore les codes correspondants à l'étranger ou non renseignés
             if code_dept in ("999", "", "None"):
                 continue
+            
+            # Ajout du dictionnaire formaté dans la liste de résultats
             resultats.append({
                 "departement": code_dept,
                 "effectif": r.get("ntop"),

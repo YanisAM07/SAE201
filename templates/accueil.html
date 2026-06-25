@@ -66,25 +66,27 @@
         const regionSelect = document.getElementById('region');
         const departementSelect = document.getElementById('departement');
 
+        // Écouteur sur le changement de sélection de la région
         regionSelect.addEventListener('change', async function() {
-            // On vide le menu département dès que la région change
+            // Affichage d'un état de chargement pendant la requête réseau
             departementSelect.innerHTML = '<option value="">-- Chargement... --</option>';
             
             const regionId = this.value;
             
+            // Vérification de la validité de la région sélectionnée
             if (!regionId) {
                 departementSelect.innerHTML = '<option value="">-- Choisir une région d\'abord --</option>';
                 return;
             }
 
             try {
-                // On appelle l'API locale avec une URL absolue garantie
+                // Appel à l'API interne pour récupérer les départements correspondants
                 const response = await fetch(`/api/departements/${regionId}`);
                 if (!response.ok) throw new Error("Erreur réseau");
                 
                 const departements = await response.json();
                 
-                // On remplit le menu avec les nouveaux départements
+                // Réinitialisation de la liste et injection des nouvelles options générées
                 departementSelect.innerHTML = '<option value="">-- Choisir un département --</option>';
                 departements.forEach(dept => {
                     const option = document.createElement('option');
@@ -93,6 +95,7 @@
                     departementSelect.appendChild(option);
                 });
             } catch (error) {
+                // Gestion des erreurs en cas d'échec de la requête
                 console.error("Erreur lors du chargement des départements :", error);
                 departementSelect.innerHTML = '<option value="">-- Erreur de chargement --</option>';
             }
