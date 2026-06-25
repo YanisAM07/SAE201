@@ -8,7 +8,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <div class="card shadow-sm p-4 mb-4">
-    <h2 class="mb-4 text-purple-custom"><i class="bi bi-activity"></i> Carte des Pathologies</h2>
+    <h2 class="mb-4 text-primary"><i class="bi bi-activity"></i> Carte des Pathologies</h2>
 
     <form action="{{ url_for('pathologies.index') }}" method="get" class="row g-3 align-items-end">
         <div class="col-md-4">
@@ -38,14 +38,14 @@
             </select>
         </div>
         <div class="col-md-2">
-            <button type="submit" class="btn w-100 text-white btn-purple-custom">Visualiser</button>
+            <button type="submit" class="btn w-100 text-white btn-primary fw-bold">Visualiser</button>
         </div>
     </form>
 
     {% if resultats %}
     <div class="mt-5">
         <h3 class="text-secondary border-bottom pb-2 mb-4">
-            Situation pour : <span class="text-purple-custom">{{ patho_selectionnee }}</span> en {{ annee_selectionnee }}
+            Situation pour : <span class="text-primary">{{ patho_selectionnee }}</span> en {{ annee_selectionnee }}
             {% if region_selectionnee %} — <span class="text-danger">{{ region_selectionnee.libelle }}</span>{% endif %}
         </h3>
 

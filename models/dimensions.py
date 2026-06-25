@@ -5,10 +5,6 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
-# ─────────────────────────────────────────────
-#  TABLES DE DIMENSION (déjà existantes)
-# ─────────────────────────────────────────────
-
 class Region(Base):
     __tablename__ = "region"
     id = Column(Integer, primary_key=True, autoincrement=True)

@@ -3,56 +3,88 @@
 {% block titre %}Effectifs{% endblock %}
 
 {% block contenu %}
-    <h2>{{ prof.libelle }} – {{ dept.code }} {{ dept.libelle }} – {{ annee }}</h2>
-
-    <p>
-        <a href="{{ url_for('effectifs.export_csv', profession_id=prof.id, departement_id=dept.id) }}" class="btn-export-csv">
-            ⬇️ Exporter l'évolution en CSV
+<div class="card shadow-sm p-4 mb-4 border-0" style="border-radius: 25px;">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="text-primary m-0">
+            <i class="bi bi-people-fill"></i> {{ prof.libelle }} 
+            <span class="text-secondary fs-4">| {{ dept.code }} {{ dept.libelle }} ({{ annee }})</span>
+        </h2>
+        <a href="{{ url_for('effectifs.export_csv', profession_id=prof.id, departement_id=dept.id) }}" class="btn btn-success fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Exporter en CSV
         </a>
-    </p>
+    </div>
 
     {% if resultats %}
-        <table class="table-effectifs">
-            <thead>
-                <tr>
-                    <th>Année</th>
-                    <th>Effectif</th>
-                    <th>Densité</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in resultats %}
-                    <tr>
-                        <td>{{ r.annee }}</td>
-                        <td>{{ r.effectif }}</td>
-                        <td>{{ r.densite }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover text-center align-middle shadow-sm" style="border-radius: 15px; overflow: hidden;">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Année</th>
+                                <th>Effectif</th>
+                                <th>Densité (pour 100 000 hab)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in resultats %}
+                                <tr>
+                                    <td class="fw-bold">{{ r.annee }}</td>
+                                    <td>{{ r.effectif }}</td>
+                                    <td>{{ r.densite }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     {% else %}
-        <p>Aucune donnée disponible pour cette sélection.</p>
+        <div class="alert alert-warning rounded-4" role="alert">
+            ⚠️ Aucune donnée disponible pour cette sélection sur le portail de l'Assurance Maladie.
+        </div>
     {% endif %}
 
-    <h3>Évolution sur plusieurs années</h3>
+    <h3 class="text-primary mb-4"><i class="bi bi-graph-up"></i> Évolution sur plusieurs années</h3>
 
-    <canvas id="graphique"></canvas>
+    <div class="card shadow-sm border-0 bg-light" style="border-radius: 15px;">
+        <div class="card-body">
+            <canvas id="graphique" height="100"></canvas>
+        </div>
+    </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script>
-        const donnees = {{ evolution|tojson }};
-        new Chart(document.getElementById("graphique"), {
-            type: "line",
-            data: {
-                labels: donnees.map(d => d.annee),
-                datasets: [{
-                    label: "Effectif",
-                    data: donnees.map(d => d.effectif),
-                    borderColor: "#2E74B5",
-                    tension: 0.2,
-                }],
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const donnees = {{ evolution|tojson }};
+    new Chart(document.getElementById("graphique"), {
+        type: "line",
+        data: {
+            labels: donnees.map(d => d.annee),
+            datasets: [{
+                label: "Effectif",
+                data: donnees.map(d => d.effectif),
+                borderColor: "#0d6efd",
+                backgroundColor: "rgba(13, 110, 253, 0.1)",
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: "#0d6efd",
+                pointRadius: 4
+            }],
+        },
+        options: {
+            responsive: true,
+            scales: { 
+                y: { beginAtZero: true } 
             },
-        });
-    </script>
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

@@ -5,7 +5,7 @@ class AmeliAPI:
 
     BASE_URL = "https://data.ameli.fr/api/explore/v2.1/catalog/datasets"
 
-    def __init__(self, timeout=10):
+    def __init__(self, timeout=1):
         self._timeout = timeout
         self._session = requests.Session()
         self._cache_colonnes = {}  # évite de re-sonder le schéma à chaque appel
@@ -13,11 +13,13 @@ class AmeliAPI:
     def get_effectifs(self, profession, departement_code, annee):
         """
         Effectifs pour une profession, un département et une année.
-        Retourne une liste de dictionnaires {annee, effectif, densite}.
         """
+        # Sécurité : on force les départements comme "1" à s'écrire "01"
+        dept = str(departement_code).strip().zfill(2)
+        
         where = (
             f"profession_sante=\"{profession}\" AND "
-            f"departement=\"{departement_code}\" AND "
+            f"departement=\"{dept}\" AND "
             f"year(annee)={annee} AND "
             f"libelle_classe_age=\"Tout âge\" AND "
             f"libelle_sexe=\"tout sexe\""
@@ -27,6 +29,7 @@ class AmeliAPI:
             "demographie-effectifs-et-les-densites",
             {"select": "annee,effectif,densite", "where": where, "limit": 100},
         )
+        
 
     def get_evolution_effectifs(self, profession, departement_code):
         """Effectifs sur toutes les années disponibles (pour un graphique)."""
@@ -47,16 +50,22 @@ class AmeliAPI:
             },
         )
 
-    def _requete(self, dataset, params):
-        """Méthode privée : effectue une requête GET et gère les erreurs."""
+    def _requete(self, dataset, params, nb_essais=3):
+        """Méthode privée : effectue une requête GET avec retry automatique."""
         url = f"{self.BASE_URL}/{dataset}/records"
-        try:
-            resp = self._session.get(url, params=params, timeout=self._timeout)
-            resp.raise_for_status()
-            return resp.json().get("results", [])
-        except requests.RequestException as e:
-            print(f"[AmeliAPI] Erreur lors de la requête : {e}")
-            return []
+        for essai in range(1, nb_essais + 1):
+            try:
+                resp = self._session.get(url, params=params, timeout=self._timeout)
+                resp.raise_for_status()
+                return resp.json().get("results", [])
+            except requests.exceptions.Timeout:
+                print(f"[AmeliAPI] Timeout essai {essai}/{nb_essais} sur {dataset}")
+                if essai == nb_essais:
+                    return []
+            except requests.RequestException as e:
+                print(f"[AmeliAPI] Erreur requête : {e}")
+                return []
+        return []
 
     def get_honoraires(self, profession, departement_code):
         """

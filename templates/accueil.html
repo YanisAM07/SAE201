@@ -5,14 +5,14 @@
 {% block contenu %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h2 class="h4 mb-0 text-primary">Consulter les effectifs</h2>
+        <div class="card shadow-sm border-0" style="border-radius: 25px;">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                <h2 class="h4 mb-0 text-primary text-center"><i class="bi bi-search"></i> Consulter les effectifs</h2>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form action="{{ url_for('effectifs.afficher') }}" method="get">
                     
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="profession" class="form-label fw-bold">Profession</label>
                         <select class="form-select" name="profession_id" id="profession" required>
                             <option value="">-- Choisir --</option>
@@ -22,8 +22,8 @@
                         </select>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
                             <label for="region" class="form-label fw-bold">Région</label>
                             <select class="form-select" name="region_id" id="region" required>
                                 <option value="">-- Choisir --</option>
@@ -33,11 +33,11 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6">
                             <label for="departement" class="form-label fw-bold">Département</label>
                             <select class="form-select" name="departement_id" id="departement" required>
                                 <option value="">-- Choisir une région d'abord --</option>
-                                </select>
+                            </select>
                         </div>
                     </div>
 
@@ -50,8 +50,10 @@
                         </select>
                     </div>
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">Afficher les statistiques</button>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold text-white rounded-pill shadow-sm">
+                            Afficher les statistiques
+                        </button>
                     </div>
                 </form>
             </div>
@@ -59,7 +61,42 @@
     </div>
 </div>
 
-<script>const BASE_URL = "{{ BASE_URL }}";</script>
-<script src="{{ url_for('static', filename='js/cascade.js') }}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const regionSelect = document.getElementById('region');
+        const departementSelect = document.getElementById('departement');
 
+        regionSelect.addEventListener('change', async function() {
+            // On vide le menu département dès que la région change
+            departementSelect.innerHTML = '<option value="">-- Chargement... --</option>';
+            
+            const regionId = this.value;
+            
+            if (!regionId) {
+                departementSelect.innerHTML = '<option value="">-- Choisir une région d\'abord --</option>';
+                return;
+            }
+
+            try {
+                // On appelle l'API locale avec une URL absolue garantie
+                const response = await fetch(`/api/departements/${regionId}`);
+                if (!response.ok) throw new Error("Erreur réseau");
+                
+                const departements = await response.json();
+                
+                // On remplit le menu avec les nouveaux départements
+                departementSelect.innerHTML = '<option value="">-- Choisir un département --</option>';
+                departements.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.id;
+                    option.textContent = `${dept.code} - ${dept.libelle}`;
+                    departementSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Erreur lors du chargement des départements :", error);
+                departementSelect.innerHTML = '<option value="">-- Erreur de chargement --</option>';
+            }
+        });
+    });
+</script>
 {% endblock %}
